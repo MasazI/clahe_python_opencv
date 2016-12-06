@@ -40,20 +40,25 @@ def clahe_hsv(image_path, verbose=False):
     return bgr
 
 
-def clahe(image_path, denoise=False, verbose=False):
+def clahe(image_path, denoise=False, verbose=False, limit=None):
     bgr = cv2.imread(image_path)
+
+    if denoise:
+        #bgr = cv2.fastNlMeansDenoisingColoredMulti([bgr, bgr, bgr, bgr, bgr], 2, 5, None, 4, 5, 35)
+        bgr = cv2.fastNlMeansDenoisingColored(bgr, None, 10, 10, 7, 21)
+
     lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB)
     lab_planes = cv2.split(lab)
-    clahe = cv2.createCLAHE(clipLimit=4)
+    clahe = cv2.createCLAHE(clipLimit=limit)
     lab_planes[0] = clahe.apply(lab_planes[0])
     #lab_planes[1] = clahe.apply(lab_planes[1])
     #lab_planes[2] = clahe.apply(lab_planes[2])
     lab = cv2.merge(lab_planes)
     bgr = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
-
-    if denoise:
-        #bgr = cv2.fastNlMeansDenoisingColoredMulti([bgr, bgr, bgr, bgr, bgr], 2, 5, None, 4, 5, 35)
-        bgr = cv2.fastNlMeansDenoisingColored(bgr, None, 10, 10, 7, 21)
+    #
+    # if denoise:
+    #     #bgr = cv2.fastNlMeansDenoisingColoredMulti([bgr, bgr, bgr, bgr, bgr], 2, 5, None, 4, 5, 35)
+    #     bgr = cv2.fastNlMeansDenoisingColored(bgr, None, 10, 10, 7, 21)
 
     if verbose:
         cv2.imshow("test", bgr)
@@ -62,16 +67,16 @@ def clahe(image_path, denoise=False, verbose=False):
     return bgr
 
 
-def convert(image_dir, output_home, option="clahe"):
+def convert(image_dir, output_home, option="clahe", limit=None):
     list = os.listdir(image_dir)
     for f in list:
         if "jpg" in f:
             print("processing: %s" % (f))
             image_path = os.path.join(image_dir, f)
             if option == "clahe":
-                bgr = clahe(image_path)
+                bgr = clahe(image_path, limit=limit)
             elif option == "clahe_de":
-                bgr = clahe(image_path, denoise=True)
+                bgr = clahe(image_path, denoise=True, limit=limit)
             elif option == "clahe_hsv":
                 bgr = clahe_hsv(image_path)
             elif option == "eql_de":
@@ -89,21 +94,20 @@ if __name__ == '__main__':
     argvs = sys.argv
     argc = len(argvs)
 
-    if argc < 3:
-        print("[Usage]python %s <option clahe, clahe_de, clahe_hsv, eql, eql_de> <image home dir> <output home dir>" % (argvs[0]))
+    if argc < 4:
+        print("[Usage]python %s <option clahe, clahe_de, clahe_hsv, eql, eql_de> <image home dir> <output home dir> <limit>" % (argvs[0]))
         sys.exit(-1)
 
     option = argvs[1]
     image_home_dir = argvs[2]
     output_home_dir = argvs[3]
-
+    limit = argvs[4]
     list_dir = os.listdir(image_home_dir)
-
     for dir in list_dir:
         image_dir_path = os.path.join(image_home_dir, dir)
         if not os.path.isdir(image_dir_path):
             continue
-        convert(image_dir_path, output_home_dir, option=option)
+        convert(image_dir_path, output_home_dir, option=option, limit=int(limit))
 
     # equlizehist()
     # clahe()
