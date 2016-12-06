@@ -6,11 +6,16 @@ import cv2
 import numpy as np
 
 
-def equlizehist(image_path, verbose=False):
+def equlizehist(image_path, denoise=False, verbose=False):
     bgr = cv2.imread(image_path)
     bgr[:, :, 0] = cv2.equalizeHist(bgr[:, :, 0])
     bgr[:, :, 1] = cv2.equalizeHist(bgr[:, :, 1])
     bgr[:, :, 2] = cv2.equalizeHist(bgr[:, :, 2])
+
+    if denoise:
+        # bgr = cv2.fastNlMeansDenoisingColoredMulti([bgr, bgr, bgr, bgr, bgr], 2, 5, None, 4, 5, 35)
+        bgr = cv2.fastNlMeansDenoisingColored(bgr, None, 10, 10, 7, 21)
+
     if verbose:
         cv2.imshow("test", bgr)
         cv2.waitKey(0)
@@ -69,6 +74,8 @@ def convert(image_dir, output_home, option="clahe"):
                 bgr = clahe(image_path, denoise=True)
             elif option == "clahe_hsv":
                 bgr = clahe_hsv(image_path)
+            elif option == "eql_de":
+                bgr = equlizehist(image_path, denoise=True)
             else:
                 bgr = equlizehist(image_path)
             basename = os.path.basename(image_dir)
@@ -83,7 +90,7 @@ if __name__ == '__main__':
     argc = len(argvs)
 
     if argc < 3:
-        print("[Usage]python %s <option clahe, clahe_de, clahe_hsv, eql> <image home dir> <output home dir>" % (argvs[0]))
+        print("[Usage]python %s <option clahe, clahe_de, clahe_hsv, eql, eql_de> <image home dir> <output home dir>" % (argvs[0]))
         sys.exit(-1)
 
     option = argvs[1]
