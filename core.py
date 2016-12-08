@@ -111,6 +111,85 @@ def b_clahe_nlm(image_path, denoise=False, verbose=False, limit=None):
     return bgr
 
 
+def b_clahe_nlm_de(image_path, sigma_s, sigma_r, denoise=False, verbose=False, limit=None):
+    bgr = cv2.imread(image_path)
+
+    if denoise:
+        bgr = cv2.bilateralFilter(bgr, 3, 3, 2)
+
+    lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB)
+    lab_planes = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=limit)
+    lab_planes[0] = clahe.apply(lab_planes[0])
+    #lab_planes[1] = clahe.apply(lab_planes[1])
+    #lab_planes[2] = clahe.apply(lab_planes[2])
+    lab = cv2.merge(lab_planes)
+    bgr = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+
+    if denoise:
+        bgr = cv2.fastNlMeansDenoisingColored(bgr, None, 10, 10, 3, 9)
+        bgr = cv2.detailEnhance(bgr, sigma_s=sigma_s, sigma_r=sigma_r)
+
+    if verbose:
+        cv2.imshow("test", bgr)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+    return bgr
+
+
+def ep_clahe_nlm_de(image_path, denoise=False, verbose=False, limit=None):
+    bgr = cv2.imread(image_path)
+
+    if denoise:
+        bgr = cv2.edgePreservingFilter(bgr, cv2.RECURS_FILTER)
+
+    lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB)
+    lab_planes = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=limit)
+    lab_planes[0] = clahe.apply(lab_planes[0])
+    #lab_planes[1] = clahe.apply(lab_planes[1])
+    #lab_planes[2] = clahe.apply(lab_planes[2])
+    lab = cv2.merge(lab_planes)
+    bgr = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+
+    if denoise:
+        bgr = cv2.fastNlMeansDenoisingColored(bgr, None, 10, 10, 3, 9)
+        bgr = cv2.detailEnhance(bgr, sigma_s=10, sigma_r=0.15)
+
+    if verbose:
+        cv2.imshow("test", bgr)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+    return bgr
+
+
+def clahe_nlm(image_path, denoise=False, verbose=False, limit=None):
+    bgr = cv2.imread(image_path)
+
+    if denoise:
+        bgr = cv2.bilateralFilter(bgr, 3, 3, 2)
+
+    lab = cv2.cvtColor(bgr, cv2.COLOR_BGR2LAB)
+    lab_planes = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=limit)
+    lab_planes[0] = clahe.apply(lab_planes[0])
+    #lab_planes[1] = clahe.apply(lab_planes[1])
+    #lab_planes[2] = clahe.apply(lab_planes[2])
+    lab = cv2.merge(lab_planes)
+    bgr = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+
+    if denoise:
+        bgr = cv2.fastNlMeansDenoisingColored(bgr, None, 10, 10, 3, 9)
+        #bgr = cv2.bilateralFilter(bgr, 5, 1, 1)
+
+    if verbose:
+        cv2.imshow("test", bgr)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+    return bgr
+
+
+
 
 def clahe_inv_b(image_path, denoise=False, verbose=False, limit=None):
     bgr = cv2.imread(image_path)
@@ -174,9 +253,9 @@ def convert(image_dir, output_home, option="clahe", limit=None, verbose=False):
                 bgr = b_clahe_nlm(image_path, denoise=True, limit=limit)
             elif option == "all":
                 bgr = b_clahe_nlm(image_path, denoise=True, limit=limit)
-                bgr_b = clahe_b(image_path, denoise=True, limit=limit)
-                bgr_inv = clahe_inv(image_path, denoise=True, limit=limit)
-                bgr_inv_b = clahe_inv_b(image_path, denoise=True, limit=limit)
+                bgr_b = ep_clahe_nlm_de(image_path, denoise=True, limit=limit)
+                bgr_inv = b_clahe_nlm_de(image_path, 10, 0.15, denoise=True, limit=limit)
+                bgr_inv_b = b_clahe_nlm_de(image_path, 5, 0.15, denoise=True, limit=limit)
 
                 bgr_2 = clahe(image_path, denoise=True, limit=2)
                 bgr_b_2 = clahe_b(image_path, denoise=True, limit=2)
@@ -189,10 +268,10 @@ def convert(image_dir, output_home, option="clahe", limit=None, verbose=False):
                 v = np.concatenate((vis, vis_2), axis=0)
 
                 font = cv2.FONT_HERSHEY_PLAIN
-                cv2.putText(v, "CLAHE_NLM", (10, 100), font, 3, (0, 0, 255))
-                cv2.putText(v, "CLAHE_BI", (650, 100), font, 3, (0, 0, 255))
-                cv2.putText(v, "NLM_CLAHE", (1300, 100), font, 3, (0, 0, 255))
-                cv2.putText(v, "BI_CLAHE", (1950, 100), font, 3, (0, 0, 255))
+                cv2.putText(v, "B_CLAHE_NLM", (10, 100), font, 3, (0, 0, 255))
+                cv2.putText(v, "EP_CLAHE_NLM_DE", (650, 100), font, 3, (0, 0, 255))
+                cv2.putText(v, "B_CLAHE_NLM_DE_10", (1300, 100), font, 3, (0, 0, 255))
+                cv2.putText(v, "B_CLAHE_NLM_DE_5", (1950, 100), font, 3, (0, 0, 255))
 
                 cv2.putText(v, "CLAHE_NLM_2", (10, 590), font, 3, (0, 0, 255))
                 cv2.putText(v, "CLAHE_2_BI", (650, 590), font, 3, (0, 0, 255))
